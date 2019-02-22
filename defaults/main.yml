@@ -1,0 +1,6 @@
+---
+# defaults file for ansible-role-crackmapexec
+
+cme_src_dir: /usr/local/src/CrackMapExec
+
+cme_shared_virtualenvs_dir: /usr/local/share/virtualenvs

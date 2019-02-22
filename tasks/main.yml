@@ -1,0 +1,74 @@
+---
+# tasks file for ansible-role-crackmapexec
+
+- name: Install CrackMapExec package dependencies
+  apt:
+    name: "{{ cme_packages }}"
+
+- name: Install pipenv package
+  pip:
+    name: pipenv
+
+- name: Ensure directory for virtualenvs exists
+  file:
+    path: "{{ cme_shared_virtualenvs_dir }}"
+    state: directory
+    owner: root
+    group: staff
+    mode: 02775
+
+- name: Check for existing Pipfile
+  stat:
+    path: "{{ cme_src_dir }}/Pipfile"
+  register: cme_pipfile
+
+- name: Check for existing virtualenv
+  command: pipenv --venv
+  args:
+    chdir: "{{ cme_src_dir }}"
+  environment:
+    WORKON_HOME: "{{ cme_shared_virtualenvs_dir }}"
+  changed_when: false
+  failed_when: false
+  register: previous_venv
+
+- name: Clone CrackMapExec repo
+  git:
+    repo: "{{ cme_repo_url }}"
+    dest: "{{ cme_src_dir }}"
+    version: "{{ cme_repo_version }}"
+    recursive: true
+    force: true
+  register: clone_cme
+
+- block:
+    - name: Remove previous virtualenv
+      file:
+        path: "{{ previous_venv.stdout | trim }}"
+        state: absent
+      when:
+        - previous_venv.rc == 0
+        - previous_venv.stdout | trim != ""
+
+    - name: Setup new virtualenv
+      command: pipenv install --deploy
+      args:
+        chdir: "{{ cme_src_dir }}"
+      environment:
+        WORKON_HOME: "{{ cme_shared_virtualenvs_dir }}"
+
+    - name: Run CrackMapExec setup
+      command: pipenv run python setup.py install
+      args:
+        chdir: "{{ cme_src_dir }}"
+      environment:
+        WORKON_HOME: "{{ cme_shared_virtualenvs_dir }}"
+  when: clone_cme is changed
+
+- name: Create shell script for cme
+  template:
+    src: cme.j2
+    dest: /usr/local/bin/cme
+    owner: root
+    group: staff
+    mode: 0755

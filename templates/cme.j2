@@ -1,0 +1,3 @@
+#!/bin/sh
+
+WORKON_HOME="{{ cme_shared_virtualenvs_dir }}" PIPENV_PIPFILE="{{ cme_src_dir }}/Pipfile" pipenv run cme "$@"
