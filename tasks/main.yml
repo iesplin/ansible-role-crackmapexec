@@ -17,11 +17,6 @@
     group: staff
     mode: 02775
 
-- name: Check for existing Pipfile
-  stat:
-    path: "{{ cme_src_dir }}/Pipfile"
-  register: cme_pipfile
-
 - name: Check for existing virtualenv
   command: pipenv --venv
   args:
@@ -39,6 +34,7 @@
     version: "{{ cme_repo_version }}"
     recursive: true
     force: true
+  changed_when: false
   register: clone_cme
 
 - block:
@@ -63,7 +59,7 @@
         chdir: "{{ cme_src_dir }}"
       environment:
         WORKON_HOME: "{{ cme_shared_virtualenvs_dir }}"
-  when: clone_cme is changed
+  when: "clone_cme.before != clone_cme.after"
 
 - name: Create shell script for cme
   template:

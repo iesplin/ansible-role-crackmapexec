@@ -9,9 +9,6 @@ Example Playbook
     - hosts: servers
       roles:
         - role: ansible-role-crackmapexec
-          jtr_local_src_dir: /usr/local/src
-          jtr_openmpi_support_enabled: true
-          jtr_rexgen_support_enabled: false
 
 License
 -------
