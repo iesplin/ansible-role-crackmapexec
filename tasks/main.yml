@@ -17,16 +17,6 @@
     group: staff
     mode: 02775
 
-- name: Check for existing virtualenv
-  command: pipenv --venv
-  args:
-    chdir: "{{ cme_src_dir }}"
-  environment:
-    WORKON_HOME: "{{ cme_shared_virtualenvs_dir }}"
-  changed_when: false
-  failed_when: false
-  register: previous_venv
-
 - name: Clone CrackMapExec repo
   git:
     repo: "{{ cme_repo_url }}"
@@ -36,13 +26,23 @@
   register: clone_cme
 
 - block:
+    - name: Get path for previous virtualenv
+      command: pipenv --venv
+      args:
+        chdir: "{{ cme_src_dir }}"
+      environment:
+        WORKON_HOME: "{{ cme_shared_virtualenvs_dir }}"
+      changed_when: false
+      failed_when: false
+      register: previous_venv_dir
+
     - name: Remove previous virtualenv
       file:
-        path: "{{ previous_venv.stdout | trim }}"
+        path: "{{ previous_venv_dir.stdout | trim }}"
         state: absent
       when:
-        - previous_venv.rc == 0
-        - previous_venv.stdout | trim != ""
+        - previous_venv_dir.rc == 0
+        - previous_venv_dir.stdout | trim != ""
 
     - name: Setup new virtualenv
       command: pipenv install --deploy
