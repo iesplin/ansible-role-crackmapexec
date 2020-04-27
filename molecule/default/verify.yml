@@ -1,0 +1,13 @@
+---
+# This is an example playbook to execute Ansible tests.
+
+- name: Verify
+  hosts: all
+  tasks:
+  - name: Execute CME
+    command: cme smb --help
+    register: execute_cme_smb
+
+  - name: Assert that CME is help displayed
+    assert:
+      that: '"usage: cme smb" in execute_cme_smb.stdout'
